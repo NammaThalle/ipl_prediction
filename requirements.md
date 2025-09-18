@@ -1,120 +1,151 @@
-# IPL Prediction System Requirements Document
+# IPL Prediction System — Learning Requirements & Architecture
 
-## Overview
-The IPL Prediction System aims to predict various outcomes related to the Indian Premier League (IPL), including but not limited to:
-- Predicting the winner of the IPL season.
-- Predicting the Man of the Match for each match.
-- Predicting other awards and outcomes (e.g., Orange Cap, Purple Cap).
+## 1. Vision & Learning Goals
+- Use IPL data as a sandbox to practice end-to-end ML workflows: ingestion, cleaning, feature engineering, modelling, evaluation, and storytelling.
+- Build lightweight tools that run comfortably on a local machine (not production infrastructure).
+- Document experiments and insights so future iterations (or other learners) can reproduce the journey.
 
-This document outlines the requirements for building the system, including data sources, algorithms, and system architecture.
+### Success Markers (Learning-Oriented)
+- Produce at least one working model for each prediction objective and record its evaluation metrics, even if accuracy is modest.
+- Explain why a model behaves the way it does using plots, tables, or narrative summaries.
+- Automate the most repetitive steps (e.g., data preparation) with scripts or notebooks.
+- Maintain a changelog of experiments, wins, and lessons learned.
 
----
+## 2. Primary Personas
+| Persona | Goals | Tools |
+| --- | --- | --- |
+| ML Learner (you) | Practice DS/ML pipeline skills, explore ideas safely | Jupyter/VS Code notebooks, Python scripts |
+| Curious Peer | Review findings, rerun demos | README, notebooks, lightweight dashboard |
+| Future Self | Revisit project later, extend to new techniques | Structured repo, documented decisions |
 
-## Functional Requirements
+## 3. Scope Definition
+### Must-Haves
+- Collect and clean historical IPL ball-by-ball data (Cricsheet JSON) into analysable tables.
+- Perform exploratory analysis and visualize key trends.
+- Train baseline models for:
+  - Match winner prediction
+  - Season outcome (e.g., top-4 standings)
+  - Player award proxy (Orange/Purple Cap)
+- Evaluate models with transparent metrics and error analysis.
+- Share results via notebooks and/or a simple interactive demo (Streamlit/FastAPI + minimal UI).
 
-### 1. Prediction Features
-- **Season Winner Prediction**: Predict the team most likely to win the IPL season.
-- **Match Winner Prediction**: Predict the winner of individual matches.
-- **Man of the Match Prediction**: Predict the player most likely to be awarded Man of the Match for each game.
-- **Award Predictions**:
-  - Orange Cap (highest run-scorer)
-  - Purple Cap (highest wicket-taker)
-  - Emerging Player of the Season
+### Nice-to-Have Experiments
+- Generative AI assistant for Q&A using project artefacts.
+- “What-if” scenario simulator (swap players, adjust toss outcome).
+- Additional data enrichments (weather, venues, auction values).
+- Re-usable feature repository or experiment tracker (e.g., MLflow).
 
-### 2. Data Handling
-- **Data Sources**:
-  - Historical IPL match data (scores, player stats, team stats, etc.).
-  - Player performance data (batting, bowling, fielding).
-  - Team composition and strategies.
-  - External factors (e.g., weather, pitch conditions).
-- **Data Preprocessing**:
-  - Cleaning and normalizing data.
-  - Handling missing or incomplete data.
-  - Feature engineering to extract meaningful insights.
+### Out of Scope (for now)
+- Production-grade deployment, autoscaling, or enterprise monitoring.
+- Complex CI/CD pipelines.
+- Live, real-time predictions during matches.
 
-### 3. Machine Learning Models
-- **Model Types**:
-  - Classification models for winner predictions.
-  - Regression models for performance metrics.
-- **Training and Validation**:
-  - Train models on historical data.
-  - Validate models using cross-validation techniques.
-- **Model Evaluation**:
-  - Accuracy, precision, recall, and F1-score for classification tasks.
-  - Mean Absolute Error (MAE) and Root Mean Square Error (RMSE) for regression tasks.
+## 4. Key Use Cases
+1. Explore dataset to surface insights (top scorers, venue advantages).
+2. Run a notebook that trains a match winner model and visualizes performance.
+3. Trigger a script/notebook that simulates a season and compares predictions to actual standings.
+4. Use a simple UI or CLI prompt to ask, “Who wins MI vs CSK at Wankhede?” and view model rationale.
 
-### 4. User Interface
-- **Web Application**:
-  - Dashboard to display predictions.
-  - Input forms for user queries (e.g., predict match winner based on team composition).
-- **Visualization**:
-  - Graphs and charts for data insights.
-  - Match and player statistics.
+## 5. Data Plan
+### Source & Storage
+- Download Cricsheet IPL JSON and keep in `data/raw/`.
+- Transform into tidy tables/parquet stored in `data/processed/` (consider DuckDB for quick queries).
+- Maintain a short data dictionary describing columns and assumptions.
 
----
+### Quality & Versioning
+- Write validation helpers (e.g., `pydantic`/assert statements) to catch obvious anomalies.
+- Record data preparation steps in notebooks/scripts so they can be replayed.
+- Version large processed artefacts with Git LFS or keep regeneration scripts handy.
 
-## Non-Functional Requirements
+### Candidate Features
+- Team form: rolling win %, net run rate, toss bias by venue.
+- Player form: recent runs/wickets, strike rates, economy.
+- Match context: venue type, day/night flag, toss decision, head-to-head record.
+- Season context: points table after each round.
 
-### 1. Performance
-- Predictions should be generated in real-time or near real-time.
-- The system should handle large datasets efficiently.
+## 6. Functional Requirements
+- Reusable loader that parses raw JSON into pandas/Polars dataframes.
+- Feature engineering modules/notebooks that create training datasets per task.
+- Training pipelines (notebook or script) for classification (match/award) and simulation for season outcomes.
+- Evaluation artefacts: confusion matrices, calibration plots, leaderboards.
+- Lightweight app layer:
+  - Option A: Streamlit dashboard with inputs for teams/venue and output predictions.
+  - Option B: FastAPI endpoint returned in notebook/CLI for quick demos.
+- Optional generative notebook that summarises results using an open-source model (offline compatible).
 
-### 2. Scalability
-- The system should be scalable to accommodate future IPL seasons and additional features.
+## 7. Non-Functional (Learning Context)
+- **Performance:** Keep run times manageable (<5 min) on a laptop by sampling or caching intermediate datasets.
+- **Reproducibility:** Use `pyproject.toml` / `requirements.txt` and deterministic seeds; document environment setup.
+- **Clarity:** Favor readable code, comments explaining tricky transformations, and markdown narratives.
+- **Flexibility:** Structure repo so new experiments can be added without refactoring everything (`notebooks/`, `src/`, `data/`).
+- **Safety:** Since this is offline learning, secure secrets by avoiding hard-coding API keys; mock where necessary.
 
-### 3. Security
-- Ensure data privacy and secure handling of sensitive information.
+## 8. Assumptions & Constraints
+- Python 3.10+ local setup; dependencies managed via `uv` or `pip`.
+- No external network during restricted sessions, so cache downloads ahead of time.
+- Dataset fits within local storage/memory; use sampling if needed.
+- MIT license compliance remains.
 
-### 4. Maintainability
-- The codebase should be modular and well-documented for easy updates and maintenance.
+## 9. Proposed Architecture (Learning-Friendly)
+```
+Raw Data (Cricsheet JSON)
+    ↓
+Ingestion Notebook / Script (parse, validate)
+    ↓
+Processed Tables (Parquet/DuckDB) + Data Dictionary
+    ↓
+Feature Engineering Modules (Python scripts)
+    ↓
+Experiment Notebooks (training, evaluation, visualization)
+    ↓                ↘
+Saved Models / Metrics          Lightweight App (Streamlit or FastAPI)
+    ↓
+Documentation (reports, readme updates, changelog)
+```
 
----
+### Components
+- **Data Ingestion:** Python script `src/data/ingest.py` or notebook `notebooks/01_ingest.ipynb`.
+- **Feature Engineering:** Module `src/features/` with helper functions for rolling stats.
+- **Modelling:** `notebooks/2x_*` for specific tasks, optionally mirrored in scripts for repeatability.
+- **Serving Demo:** `streamlit_app.py` or `src/app/api.py` to showcase predictions.
+- **Experiment Tracking (optional):** Simple CSV/JSON log or MLflow if desired.
 
-## Technical Requirements
+## 10. Roadmap
+1. **Setup & Data Familiarisation**
+   - Organize repo folders (`data/`, `notebooks/`, `src/`, `reports/`).
+   - Download Cricsheet data; inspect JSON structure.
+2. **Data Cleaning & EDA**
+   - Build ingestion + cleaning pipeline.
+   - Produce initial EDA notebook with visual insights.
+3. **Baseline Models**
+   - Construct match winner dataset → train simple classifiers (logistic regression, tree-based).
+   - Extend to season simulations and award predictors.
+4. **Evaluation & Explainability**
+   - Record metrics, plot feature importances, analyse misclassifications.
+5. **Demo Application**
+   - Build Streamlit/FastAPI demo using saved models.
+6. **Stretch Experiments**
+   - Add generative summaries, scenario simulations, or advanced models (XGBoost, LSTM).
+7. **Wrap-Up**
+   - Summarize learnings in README, note future ideas.
 
-### 1. Programming Languages and Frameworks
-- **Backend**: Python (Flask/Django/FastAPI).
-- **Frontend**: React.js/Angular/Vue.js.
-- **Machine Learning**: Scikit-learn, TensorFlow, PyTorch.
+## 11. Testing & Validation
+- Unit tests for data loaders/feature functions (`pytest`).
+- Notebook assertions verifying dataset shapes and key invariants.
+- Backtesting seasons (train on 2008–2017, test 2018, etc.).
+- Manual smoke tests for Streamlit/API demo.
 
-### 2. Database
-- **Relational Database**: MySQL/PostgreSQL for structured data.
-- **NoSQL Database**: MongoDB for unstructured data.
+## 12. Risks & Mitigations
+- **Data Volume Overload:** Use season subsets or DuckDB to keep memory under control.
+- **Feature Leakage:** Carefully align features with prediction timeline; document assumptions.
+- **Model Overfitting:** Reserve holdout seasons, perform cross-validation.
+- **Motivation Drift:** Maintain a TODO backlog and celebrate milestones to stay engaged.
+- **Tooling Fatigue:** Start simple (pandas, sklearn); only add new tools when the need is clear.
 
-### 3. APIs
-- Integration with external APIs for live data (e.g., weather, player stats).
+## 13. Open Questions
+- Do you prefer Streamlit or FastAPI for the first interactive demo?
+- Which experiment tracker (if any) feels worth the setup effort?
+- How deep should generative AI experiments go given offline constraints?
+- Would you like to compare models season-by-season or focus on the most recent seasons first?
 
-### 4. Deployment
-- Cloud-based deployment (AWS, Azure, Google Cloud).
-- CI/CD pipelines for automated testing and deployment.
-
----
-
-## Milestones
-
-### Phase 1: Requirement Analysis
-- Finalize the scope of predictions.
-- Identify data sources and gather datasets.
-
-### Phase 2: Data Preparation
-- Clean and preprocess data.
-- Perform exploratory data analysis (EDA).
-
-### Phase 3: Model Development
-- Train and validate machine learning models.
-- Optimize models for accuracy and performance.
-
-### Phase 4: Application Development
-- Build the backend and frontend components.
-- Integrate machine learning models with the application.
-
-### Phase 5: Testing and Deployment
-- Perform system testing and user acceptance testing (UAT).
-- Deploy the application to the cloud.
-
----
-
-## Future Enhancements
-- Add support for other cricket leagues and tournaments.
-- Incorporate advanced analytics (e.g., player injury predictions).
-- Develop a mobile application for on-the-go predictions.
+This document will evolve as you progress; treat it as a living guide for your learning journey.

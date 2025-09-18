@@ -2,5 +2,9 @@
 name = "ipl_prediction"
 description = "Sophisticated IPL prediction system"
 version = "0.1.0"
-authors = Shravan Manerikar
+authors = "Shravan Manerikar"
 license = "MIT"
+dependencies = [
+    "pandas>=2.3.2",
+    "tqdm>=4.67.1",
+]

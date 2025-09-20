@@ -1,0 +1,6 @@
+[project]
+name = "ipl_prediction"
+description = "Sophisticated IPL prediction system"
+version = "0.1.0"
+authors = Shravan Manerikar
+license = "MIT"
